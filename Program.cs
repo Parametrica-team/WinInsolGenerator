@@ -30,11 +30,12 @@ namespace WinInsolGenerator
         }
 
         /// <summary>
-        /// 
+        /// Создает квартиры из кода уровня.
+        /// В квартиры записывается количество окон и их индексы, начиная с левого нижнего торцевого окна.
         /// </summary>
         /// <param name="levelCode"></param>
-        /// <param name="sideWindowsQty">количество окон в каждом торце</param>
-        /// <returns></returns>
+        /// <param name="sideWindowsQty">Количество окон в каждом торце. Обязательно должно быть четным числом! Если квартир в торцах нет, то можно ввести ноль</param>
+        /// <returns>Список квартир</returns>
         private static List<Flat> GetFlatsFromCode(string levelCode, int sideWindowsQty)
         {
             if (string.IsNullOrEmpty(levelCode)) return null;
