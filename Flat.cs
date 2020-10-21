@@ -21,7 +21,13 @@ namespace WinInsolGenerator
         {
             if (string.IsNullOrEmpty(code)) return;
             Id = code;
-            if (Id == "llu") return;
+            Indexes = new List<int>();
+
+            if (Id == "llu")
+            {
+                FType = "llu";
+                return;
+            }
 
             var vals = code.Split('_');
             if (code.Length < 3) return;
