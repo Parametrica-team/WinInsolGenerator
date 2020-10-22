@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace WinInsolGenerator
 {
@@ -92,6 +94,21 @@ namespace WinInsolGenerator
                                     t.Seconds,
                                     t.Milliseconds);
             Console.WriteLine($"Total time: {t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s:{t.Milliseconds:D3}ms");
+
+            //сохранение json
+            
+            
+            string folder = Path.GetDirectoryName(path);
+            string fileName = Path.GetFileNameWithoutExtension(path);
+            var winInsolPath = Path.Combine(folder, fileName + "_WinInsol.json");
+            var winInsolJson = JsonConvert.SerializeObject(winInsol, Formatting.Indented);
+            File.WriteAllText(winInsolPath, winInsolJson);
+            Console.WriteLine($"WinInsol saved to {winInsolPath}");
+
+            string hblockInsolJson = JsonConvert.SerializeObject(hblockInsol, Formatting.Indented);
+            var hblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.json");
+            File.WriteAllText(hblockInsolPath, hblockInsolJson);
+            Console.WriteLine($"HlockInsol saved to {hblockInsolPath}");
         }
 
         public static int GetStepsFromCode(string levelCode)
