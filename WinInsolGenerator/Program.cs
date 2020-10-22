@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace WinInsolGenerator
 {
-    class Program
+    public class Program
     {
         static void Main(string[] args)
         {
@@ -88,7 +88,7 @@ namespace WinInsolGenerator
 
         
 
-        private static string SortCodeClockwise(string code)
+        public static string SortCodeClockwise(string code)
         {
             if (string.IsNullOrEmpty(code)) return null;
 
