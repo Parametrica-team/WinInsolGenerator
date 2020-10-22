@@ -105,6 +105,7 @@ namespace WinInsolGenerator
             File.WriteAllText(winInsolPath, winInsolJson);
             Console.WriteLine($"WinInsol saved to {winInsolPath}");
 
+            hblockInsol.Archive();
             string hblockInsolJson = JsonConvert.SerializeObject(hblockInsol, Formatting.Indented);
             var hblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.json");
             File.WriteAllText(hblockInsolPath, hblockInsolJson);
