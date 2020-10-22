@@ -15,20 +15,34 @@ namespace WinInsolGenerator
         /// Тип секции
         /// </summary>
         public string HblockId { get; set; }
+
         /// <summary>
-        /// Словарь winInsol - список уровней для каждой комбинации инсоляции
+        /// Словарь winInsol - список индексов(!) уровней для каждой комбинации инсоляции
+        /// Индексы соответсвуют списку уровней в LevelCodes
         /// </summary>
-        public Dictionary<string, HashSet<string>> InsolData { get; set; }        
+        public Dictionary<string, HashSet<int>> InsolData { get; set; }        
+
+        /// <summary>
+        /// Все доступные уровни для данной секции
+        /// </summary>
+        public string[] LevelCodes { get; set; }
 
         public HblockInsol()
         {
-            InsolData = new Dictionary<string, HashSet<string>>();
+            InsolData = new Dictionary<string, HashSet<int>>();
         }
 
         public HblockInsol(string hblockId)
         {
             HblockId = hblockId;
-            InsolData = new Dictionary<string, HashSet<string>>();
+            InsolData = new Dictionary<string, HashSet<int>>();
+        }
+
+        public HblockInsol(string hblockId, string[] levelCodes)
+        {
+            HblockId = hblockId;
+            InsolData = new Dictionary<string, HashSet<int>>();
+            LevelCodes = levelCodes;
         }
     }
 

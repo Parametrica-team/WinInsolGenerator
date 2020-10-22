@@ -1,6 +1,7 @@
 ﻿using Robot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 
@@ -12,28 +13,37 @@ namespace WinInsolGenerator
         {
             string path = Assembly.GetExecutingAssembly().Location;
             //path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
-            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_5.txt");
+            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_7.txt");
             
             var winInsols = new List<WindowInsol>();
             var hblockInsols = new List<HblockInsol>();
             //read file
             var levelCodes = System.IO.File.ReadAllLines(path);
 
+            //потом, когда все строки будут отсортированы, то нужно будет убрать
+            levelCodes = levelCodes.Select(c => SortCodeClockwise(c)).ToArray();
+
+            var winInsol = new WindowInsol()
+            {
+                llu = "llu",
+                HblockId = "S_M_" + GetStepsFromCode(levelCodes[0]),
+                WindowId = new HashSet<string>()
+            };
+
+            var hblockInsol = new HblockInsol(winInsol.HblockId, levelCodes);
+
+            Console.WriteLine("Calculation started at " + DateTime.Now);
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            int counter = 0;
             foreach (var levelCode  in levelCodes)
             {
-                //потом, когда все строки будут отсортированы, то нужно будет убрать
-                var sortedCode = SortCodeClockwise(levelCode);
-
-
-                var winInsol = new WindowInsol()
-                {
-                    llu = "llu",
-                    HblockId = "S_M_" + GetStepsFromCode(levelCode),
-                    WindowId = new List<string>()                    
-                };               
+                //процент выполнения
+                Console.Write("\r" + (int)(counter * 100 / levelCodes.Length) + " %");
 
                 //Create Flats
-                List<Flat> level = GetFlatsFromCode(sortedCode, 2);
+                List<Flat> level = GetFlatsFromCode(levelCode, 2);
 
                 //Create combinations inside each flat
                 //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
@@ -53,29 +63,35 @@ namespace WinInsolGenerator
                         .OrderBy(s => int.Parse(s)) //сортировать по возрастанию чисел                        
                         .ToList();
 
-                    sortedCombination.Add(string.Join(',', nums));
-                }
-
-                winInsol.WindowId.AddRange(sortedCombination);
+                    winInsol.WindowId.Add(string.Join(',', nums));
+                }                
 
                 //add WinInsol to list
-                winInsols.Add(winInsol);
+                //winInsols.Add(winInsol);
 
+                
                 //собрать списки подходящих уровней для каждой комбинации инсоляции для HBlock                
-                var hblockInsol = hblockInsols.Where(h => h.HblockId == winInsol.HblockId).FirstOrDefault();
-                if (hblockInsol == null)
-                {
-                    hblockInsol = new HblockInsol(winInsol.HblockId);
-                    hblockInsols.Add(hblockInsol);
-                }
                 foreach (var winIns in winInsol.WindowId)
-                {
+                {                    
                     if (hblockInsol.InsolData.ContainsKey(winIns))
-                        hblockInsol.InsolData[winIns].Add(sortedCode);
+                        hblockInsol.InsolData[winIns].Add(counter); //counter совпадает с индексом в hblockInsol.LevelCodes
                     else
-                        hblockInsol.InsolData.Add(winIns, new HashSet<string>() { sortedCode });
-                }                
+                        hblockInsol.InsolData.Add(winIns, new HashSet<int>() { counter });
+                }
+
+                counter++;
             }
+
+            stopwatch.Stop();
+            Console.WriteLine();
+            Console.WriteLine("Calculation finished at " + DateTime.Now);
+            TimeSpan t = TimeSpan.FromMilliseconds(stopwatch.ElapsedMilliseconds);
+            string answer = string.Format("{0:D2}h:{1:D2}m:{2:D2}s:{3:D3}ms",
+                                    t.Hours,
+                                    t.Minutes,
+                                    t.Seconds,
+                                    t.Milliseconds);
+            Console.WriteLine($"Total time: {t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s:{t.Milliseconds:D3}ms");
         }
 
         public static int GetStepsFromCode(string levelCode)

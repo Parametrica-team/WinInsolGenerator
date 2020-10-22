@@ -10,7 +10,7 @@ namespace Robot
     {
         public string HblockId { get; set; }
         public string llu { get; set; }
-        public List<string> WindowId { get; set; }
+        public HashSet<string> WindowId { get; set; }
 
         public WindowInsol()
         {
