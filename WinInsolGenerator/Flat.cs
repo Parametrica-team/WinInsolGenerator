@@ -16,7 +16,9 @@ namespace WinInsolGenerator
         public string FType { get; set; }
         public int TopWindows { get; set; }
         public int BottomWindows { get; set; }
-        
+        public List<string> WindowCombinations { get; private set; }
+
+
         //private fields
         private List<List<int>> flatWinCombs;
         private Stack<int> comb;
@@ -43,32 +45,35 @@ namespace WinInsolGenerator
             TopWindows = int.Parse(vals[1]);
             BottomWindows = int.Parse(vals[2]);
         }
-
         
-
-        public List<string> GetWindowCombinations()
+        public void SetWindowCombinations()
         {
-            var combinations = new List<string>();
-            if (FType == "llu") return combinations;
+            WindowCombinations = new List<string>();
+            if (FType == "llu") return;
 
             var rooms = Indexes.Count - 1;
             if (rooms < 1) rooms = 1; //для студий
 
             numberOfCombinations = rooms - 2; //количетво лишних комнат в 4+ квартирах
-            if (numberOfCombinations < 2)
-                return Indexes.Select(i => i.ToString()).ToList();
-
-            comb = new Stack<int>();
-            flatWinCombs = new List<List<int>>();
             
-            //запуск перебора
-            AddWindow(0);
-
-            if (flatWinCombs.Any())
+            if (numberOfCombinations < 2)
             {
-                combinations = flatWinCombs.Select(c => string.Join(',', c)).ToList();
-            }
-            return combinations;
+                WindowCombinations = Indexes.Select(i => i.ToString()).ToList();
+                return;
+            }                
+            else
+            {
+                comb = new Stack<int>();
+                flatWinCombs = new List<List<int>>();
+
+                //запуск перебора
+                AddWindow(0);
+
+                if (flatWinCombs.Any())
+                {
+                    WindowCombinations = flatWinCombs.Select(c => string.Join(',', c)).ToList();
+                }
+            }            
         }
 
         private void AddWindow(int currentIndex)

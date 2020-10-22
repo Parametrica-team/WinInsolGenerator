@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Robot;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -6,27 +7,83 @@ using System.Reflection;
 namespace WinInsolGenerator
 {
     public class Program
-    {
+    {        
         static void Main(string[] args)
         {
             string path = Assembly.GetExecutingAssembly().Location;
-            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
+            //path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
+            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_5.txt");
             
-            
+            var winInsols = new List<WindowInsol>();
+            var hblockInsols = new List<HblockInsol>();
             //read file
             var levelCodes = System.IO.File.ReadAllLines(path);
+
             foreach (var levelCode  in levelCodes)
             {
                 //потом, когда все строки будут отсортированы, то нужно будет убрать
                 var sortedCode = SortCodeClockwise(levelCode);
 
-                var level = GetFlatsFromCode(sortedCode, 2);
-                foreach (var flat in level)
-                {
-                    Console.WriteLine($"{flat.Id}\t{string.Join(',', flat.Indexes)}");
-                }
-            }
 
+                var winInsol = new WindowInsol()
+                {
+                    llu = "llu",
+                    HblockId = "S_M_" + GetStepsFromCode(levelCode),
+                    WindowId = new List<string>()                    
+                };               
+
+                //Create Flats
+                List<Flat> level = GetFlatsFromCode(sortedCode, 2);
+
+                //Create combinations inside each flat
+                //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
+                level.ForEach(f => f.SetWindowCombinations());
+
+                //создать все возможные комбинации окон
+                var combinator = new Combinator<string>(level
+                    .Where(f => f.FType != "llu")
+                    .Select(f => f.WindowCombinations).ToList());
+
+                //Превратить в строку для winInsol                
+                var sortedCombination = new List<string>();
+                foreach (var comb in combinator.Combinations)
+                {
+                    //В больших квартирах записаны пары "1,5" их нужно учитывать
+                    var nums = comb.SelectMany(c => c.Split(','))
+                        .OrderBy(s => int.Parse(s)) //сортировать по возрастанию чисел                        
+                        .ToList();
+
+                    sortedCombination.Add(string.Join(',', nums));
+                }
+
+                winInsol.WindowId.AddRange(sortedCombination);
+
+                //add WinInsol to list
+                winInsols.Add(winInsol);
+
+                //собрать списки подходящих уровней для каждой комбинации инсоляции для HBlock                
+                var hblockInsol = hblockInsols.Where(h => h.HblockId == winInsol.HblockId).FirstOrDefault();
+                if (hblockInsol == null)
+                {
+                    hblockInsol = new HblockInsol(winInsol.HblockId);
+                    hblockInsols.Add(hblockInsol);
+                }
+                foreach (var winIns in winInsol.WindowId)
+                {
+                    if (hblockInsol.InsolData.ContainsKey(winIns))
+                        hblockInsol.InsolData[winIns].Add(sortedCode);
+                    else
+                        hblockInsol.InsolData.Add(winIns, new HashSet<string>() { sortedCode });
+                }                
+            }
+        }
+
+        public static int GetStepsFromCode(string levelCode)
+        {
+            return  levelCode.Split(',')
+                .Where(f => f != "llu")
+                .Select(f => int.Parse(f.Split('_')[2]))
+                .Sum();
         }
 
         /// <summary>
