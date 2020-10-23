@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Robot
+namespace WinInsolGenerator
 {
     [Serializable()]
     public class WindowInsol

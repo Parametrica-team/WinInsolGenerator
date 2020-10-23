@@ -17,13 +17,10 @@ namespace WinInsolGenerator
         public string FType { get; set; }
         public int TopWindows { get; set; }
         public int BottomWindows { get; set; }
-        public List<string> WindowCombinations { get; private set; }
         public List<BitArray> WindowCombinationsBits { get; private set; }
 
 
         //private fields
-        private List<List<int>> flatWinCombs;
-        private Stack<int> comb;
         private int numberOfCombinations;
         private BitArray tempBitArray;
 
@@ -47,58 +44,7 @@ namespace WinInsolGenerator
             FType = vals[0];
             TopWindows = int.Parse(vals[1]);
             BottomWindows = int.Parse(vals[2]);
-        }
-
-        public void SetWindowCombinations()
-        {
-            WindowCombinations = new List<string>();
-            if (FType == "llu") return;
-
-            var rooms = Indexes.Count - 1;
-            if (rooms < 1) rooms = 1; //для студий
-
-            numberOfCombinations = rooms - 2; //количетво лишних комнат в 4+ квартирах
-
-            if (numberOfCombinations < 2)
-            {
-                WindowCombinations = Indexes.Select(i => i.ToString()).ToList();
-                return;
-            }
-            else
-            {
-                comb = new Stack<int>();
-                flatWinCombs = new List<List<int>>();
-
-                //запуск перебора
-                //AddWindow(0);
-
-                if (flatWinCombs.Any())
-                {
-                    WindowCombinations = flatWinCombs.Select(c => string.Join(',', c)).ToList();
-                }
-            }
-        }
-        
-        private void AddWindow(int currentIndex)
-        {
-            if (currentIndex == TopWindows + BottomWindows)
-                return;
-
-            for (int i = currentIndex; i < (TopWindows + BottomWindows); i++)
-            {
-                comb.Push(Indexes[i]);
-                if (comb.Count == numberOfCombinations)
-                {
-                    flatWinCombs.Add(comb.Reverse().ToList());
-                }
-                else
-                {
-                    AddWindow(i + 1);
-                }
-
-                comb.Pop();
-            }
-        }
+        }       
         
 
         public void SetWindowCombinationsBits()
