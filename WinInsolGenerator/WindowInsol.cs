@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Robot
 {
+    [Serializable()]
     public class WindowInsol
     {
         public string HblockId { get; set; }

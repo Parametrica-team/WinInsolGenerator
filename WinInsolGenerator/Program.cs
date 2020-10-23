@@ -7,6 +7,7 @@ using System.Reflection;
 using Newtonsoft.Json;
 using System.IO;
 using System.Collections;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace WinInsolGenerator
 {
@@ -74,11 +75,7 @@ namespace WinInsolGenerator
                     winInsol.WindowId.Add(new BitArray(boolArray));
                 }
                 
-
-                //add WinInsol to list
-                //winInsols.Add(winInsol);
-
-                /*
+                
                 //собрать списки подходящих уровней для каждой комбинации инсоляции для HBlock                
                 foreach (var winIns in winInsol.WindowId)
                 {                    
@@ -87,7 +84,7 @@ namespace WinInsolGenerator
                     else
                         hblockInsol.InsolData.Add(winIns, new HashSet<int>() { counter });
                 }
-                */
+                
                 counter++;
             }
 
@@ -102,21 +99,53 @@ namespace WinInsolGenerator
                                     t.Milliseconds);
             Console.WriteLine($"Total time: {t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s:{t.Milliseconds:D3}ms");
 
-            //сохранение json
-            
-            
+            //сохранение json            
             string folder = Path.GetDirectoryName(path);
             string fileName = Path.GetFileNameWithoutExtension(path);
-            var winInsolPath = Path.Combine(folder, fileName + "_WinInsol.json");
-            var winInsolJson = JsonConvert.SerializeObject(winInsol, Formatting.Indented);
-            File.WriteAllText(winInsolPath, winInsolJson);
-            Console.WriteLine($"WinInsol saved to {winInsolPath}");
+            //stopwatch.Restart();
+            //var winInsolPath = Path.Combine(folder, fileName + "_WinInsol.json");
+            //var winInsolJson = JsonConvert.SerializeObject(winInsol, Formatting.Indented);
+            //File.WriteAllText(winInsolPath, winInsolJson);
+            //Console.WriteLine($"WinInsol saved to {winInsolPath}");
+            //Console.WriteLine($"WinInsol json saved in {stopwatch.ElapsedMilliseconds}ms");            
 
-            hblockInsol.Archive();
-            string hblockInsolJson = JsonConvert.SerializeObject(hblockInsol, Formatting.Indented);
-            var hblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.json");
-            File.WriteAllText(hblockInsolPath, hblockInsolJson);
-            Console.WriteLine($"HlockInsol saved to {hblockInsolPath}");
+            
+            //string hblockInsolJson = JsonConvert.SerializeObject(hblockInsol, Formatting.Indented);
+            //var hblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.json");
+            //File.WriteAllText(hblockInsolPath, hblockInsolJson);
+            //Console.WriteLine($"HlockInsol saved to {hblockInsolPath}");
+
+            //сохранение бинарное
+            stopwatch.Restart();
+            var binaryWinInsolPath = Path.Combine(folder, fileName + "_WinInsol.wins");
+            Stream SaveFileStream = File.Create(binaryWinInsolPath);
+            BinaryFormatter serializer = new BinaryFormatter();
+            serializer.Serialize(SaveFileStream, winInsol);
+            SaveFileStream.Close();            
+            Console.WriteLine($"WinInsol saved in {stopwatch.ElapsedMilliseconds}ms");
+
+            //сохранение бинарное hblockInsol
+            stopwatch.Restart();
+            var binaryHblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.wins");
+            SaveFileStream = File.Create(binaryHblockInsolPath);
+            serializer = new BinaryFormatter();
+            serializer.Serialize(SaveFileStream, hblockInsol);
+            SaveFileStream.Close();
+            Console.WriteLine($"HblockInsol saved in {stopwatch.ElapsedMilliseconds}ms");
+
+            winInsol = null;
+            stopwatch.Restart();
+            var winInsolRead = new WindowInsol();
+            if (File.Exists(binaryWinInsolPath))
+            {
+                Console.WriteLine("Reading saved file");
+                Stream openFileStream = File.OpenRead(binaryWinInsolPath);
+                BinaryFormatter deserializer = new BinaryFormatter();
+                winInsolRead = (WindowInsol)deserializer.Deserialize(openFileStream);
+                //TestLoan.TimeLastLoaded = DateTime.Now;
+                openFileStream.Close();
+            }
+            Console.WriteLine($"WinInsol opened in {stopwatch.ElapsedMilliseconds}ms");
         }
 
         public static int GetStepsFromCode(string levelCode)

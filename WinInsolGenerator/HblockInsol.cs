@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO.Compression;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace WinInsolGenerator
 {
-    [DataContract]
+    [Serializable()]
     /// <summary>
     /// Здесь хранятся списки подходящих уровней для каждой комбинации инсоляции для HBlock
     /// </summary>
@@ -25,11 +26,12 @@ namespace WinInsolGenerator
         /// <summary>
         /// Словарь winInsol - список индексов(!) уровней для каждой комбинации инсоляции
         /// Индексы соответсвуют списку уровней в LevelCodes
-        /// </summary>        
-        public Dictionary<string, HashSet<int>> InsolData { get; set; }
-
+        /// </summary>    
         [DataMember]
-        public Dictionary<string, string> InsolDataArchive { get; private set; }
+        public Dictionary<BitArray, HashSet<int>> InsolData { get; set; }
+
+        
+        public Dictionary<BitArray, string> InsolDataArchive { get; private set; }
 
         [DataMember]
         /// <summary>
@@ -39,29 +41,20 @@ namespace WinInsolGenerator
 
         public HblockInsol()
         {
-            InsolData = new Dictionary<string, HashSet<int>>();
+            InsolData = new Dictionary<BitArray, HashSet<int>>();
         }
 
         public HblockInsol(string hblockId)
         {
             HblockId = hblockId;
-            InsolData = new Dictionary<string, HashSet<int>>();
+            InsolData = new Dictionary<BitArray, HashSet<int>>();
         }
 
         public HblockInsol(string hblockId, string[] levelCodes)
         {
             HblockId = hblockId;
-            InsolData = new Dictionary<string, HashSet<int>>();
+            InsolData = new Dictionary<BitArray, HashSet<int>>();
             LevelCodes = levelCodes;
-        }
-
-        public void Archive()
-        {
-            InsolDataArchive = new Dictionary<string, string>();
-            foreach (var key in InsolData.Keys)
-            {
-                InsolDataArchive.Add(key, string.Join(',', InsolData[key]));
-            }
         }
     }
 
