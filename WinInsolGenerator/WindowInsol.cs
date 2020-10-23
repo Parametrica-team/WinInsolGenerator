@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +11,7 @@ namespace Robot
     {
         public string HblockId { get; set; }
         public string llu { get; set; }
-        public byte[] WindowId { get; set; }
+        public List<BitArray> WindowId { get; set; }
 
         public WindowInsol()
         {
@@ -18,7 +19,7 @@ namespace Robot
 
         public WindowInsol(int windowQty)
         {
-            WindowId = new byte[windowQty];
+            WindowId = new List<BitArray>();
         }
     }
 }

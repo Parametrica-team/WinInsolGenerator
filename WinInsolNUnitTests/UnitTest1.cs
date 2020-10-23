@@ -74,9 +74,18 @@ namespace WinInsolNUnitTests
         public void SetCombinationsBool_3Rooms()
         {
             var flat = new Flat("CR_3_1");
-            flat.SetWindowCombinationsBool();
+            flat.SetWindowCombinationsBits();
             //var test = string.Join("",flat.WindowCombinationsBool[0].Select();
-            Assert.IsTrue(flat.WindowCombinationsBool[0][0]);
+            Assert.IsTrue(flat.WindowCombinationsBits[0][0]);
+        }
+
+        [Test]
+        public void SetCombinationsBool_4Rooms()
+        {
+            var flat = new Flat("CR_4_1");
+            flat.SetWindowCombinationsBits();
+            //var test = string.Join("",flat.WindowCombinationsBool[0].Select();
+            Assert.AreEqual(flat.WindowCombinationsBits[0].ToBitString(), "11000");
         }
     }
 }

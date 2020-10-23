@@ -18,7 +18,7 @@ namespace WinInsolGenerator
         public int TopWindows { get; set; }
         public int BottomWindows { get; set; }
         public List<string> WindowCombinations { get; private set; }
-        public List<BitArray> WindowCombinationsBool { get; private set; }
+        public List<BitArray> WindowCombinationsBits { get; private set; }
 
 
         //private fields
@@ -70,7 +70,7 @@ namespace WinInsolGenerator
                 flatWinCombs = new List<List<int>>();
 
                 //запуск перебора
-                AddWindow(0);
+                //AddWindow(0);
 
                 if (flatWinCombs.Any())
                 {
@@ -78,7 +78,7 @@ namespace WinInsolGenerator
                 }
             }
         }
-        /*
+        
         private void AddWindow(int currentIndex)
         {
             if (currentIndex == TopWindows + BottomWindows)
@@ -99,21 +99,17 @@ namespace WinInsolGenerator
                 comb.Pop();
             }
         }
-        */
+        
 
-        public void SetWindowCombinationsBool()
+        public void SetWindowCombinationsBits()
         {
-            WindowCombinationsBool = new List<BitArray>();
+            WindowCombinationsBits = new List<BitArray>();
             var totalWins = BottomWindows + TopWindows;
             var bitArray = new BitArray(totalWins);
 
             if (FType == "llu")
-            {                
-                for (int i = 0; i < totalWins; i++)
-                {
-                    bitArray[i] = false;
-                }
-                WindowCombinationsBool.Add(bitArray);
+            {                   
+                WindowCombinationsBits.Add(bitArray);
                 return;
             }
 
@@ -128,13 +124,15 @@ namespace WinInsolGenerator
                 {
                     bitArray = new BitArray(totalWins);
                     bitArray[i] = true;
-                    WindowCombinationsBool.Add(bitArray);
+                    WindowCombinationsBits.Add(bitArray);
                 }
                 return;
             }
             else
             {
                 //нужно сделать перебор
+                tempBitArray = new BitArray(totalWins);
+                AddWindowBit(0);
             }
         }
 
@@ -146,20 +144,20 @@ namespace WinInsolGenerator
             for (int i = currentIndex; i < (TopWindows + BottomWindows); i++)
             {
                 tempBitArray[i] = true;
-                if (BitSum(tempBitArray) == numberOfCombinations)
+                if (GetBitSum(tempBitArray) == numberOfCombinations)
                 {
-                    WindowCombinationsBool.Add(tempBitArray.co);
-                    tempBitArray.c
+                    WindowCombinationsBits.Add((BitArray)tempBitArray.Clone());
                 }
                 else
                 {
                     AddWindowBit(i + 1);
                 }
 
-                comb.Pop();
+                tempBitArray[i] = false;
             }
         }
 
+        //обычная сумма, работает медленней чем GetBitSum
         private int BitSum(BitArray bArray)
         {
             int sum = 0;
@@ -172,7 +170,7 @@ namespace WinInsolGenerator
 
         //какое-то говно со Stack Overflow
         //Сумма битов
-        public static Int32 GetCardinality(BitArray bitArray)
+        public static Int32 GetBitSum(BitArray bitArray)
         {
 
             Int32[] ints = new Int32[(bitArray.Count >> 5) + 1];

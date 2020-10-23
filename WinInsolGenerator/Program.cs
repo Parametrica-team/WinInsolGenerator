@@ -6,6 +6,7 @@ using System.Linq;
 using System.Reflection;
 using Newtonsoft.Json;
 using System.IO;
+using System.Collections;
 
 namespace WinInsolGenerator
 {
@@ -15,7 +16,7 @@ namespace WinInsolGenerator
         {
             string path = Assembly.GetExecutingAssembly().Location;
             //path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
-            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_5.txt");
+            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_7.txt");
             const int sideWindows = 2;
             
             var winInsols = new List<WindowInsol>();
@@ -31,7 +32,7 @@ namespace WinInsolGenerator
             {
                 llu = "llu",
                 HblockId = "S_M_" + numberOfSteps,
-                WindowId = new byte[numberOfSteps * 2 + (sideWindows * 2)]
+                WindowId = new List<BitArray>()
             };
 
             var hblockInsol = new HblockInsol(winInsol.HblockId, levelCodes);
@@ -51,26 +52,28 @@ namespace WinInsolGenerator
 
                 //Create combinations inside each flat
                 //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
-                level.ForEach(f => f.SetWindowCombinations());
+                level.ForEach(f => f.SetWindowCombinationsBits());
 
                 //создать все возможные комбинации окон
-                var combinator = new Combinator<string>(level
+                var combinator = new Combinator<BitArray>(level
                     .Where(f => f.FType != "llu")
-                    .Select(f => f.WindowCombinations).ToList());
+                    .Select(f => f.WindowCombinationsBits).ToList());
 
-                //Превратить в строку для winInsol                
-                var sortedCombination = new List<string>();
-                /*
-                foreach (var comb in combinator.Combinations)
+                //Превратить в строку для winInsol 
+                var totalWins = (numberOfSteps + sideWindows) * 2;
+                foreach (List<BitArray> comb in combinator.Combinations)
                 {
-                    //В больших квартирах записаны пары "1,5" их нужно учитывать
-                    var nums = comb.SelectMany(c => c.Split(','))
-                        .OrderBy(s => int.Parse(s)) //сортировать по возрастанию чисел                        
-                        .ToList();
+                    var boolArray = new bool[totalWins];
+                    int currentIndex = 0;
+                    foreach (var bitAr in comb)
+                    {
+                        bitAr.CopyTo(boolArray, currentIndex);
+                        currentIndex += bitAr.Length;
+                    }
 
-                    winInsol.WindowId.Add(string.Join(',', nums));
+                    winInsol.WindowId.Add(new BitArray(boolArray));
                 }
-                */
+                
 
                 //add WinInsol to list
                 //winInsols.Add(winInsol);
