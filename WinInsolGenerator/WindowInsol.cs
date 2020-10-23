@@ -10,10 +10,15 @@ namespace Robot
     {
         public string HblockId { get; set; }
         public string llu { get; set; }
-        public HashSet<string> WindowId { get; set; }
+        public byte[] WindowId { get; set; }
 
         public WindowInsol()
         {
+        }
+
+        public WindowInsol(int windowQty)
+        {
+            WindowId = new byte[windowQty];
         }
     }
 }

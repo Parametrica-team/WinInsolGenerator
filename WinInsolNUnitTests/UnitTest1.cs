@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using WinInsolGenerator;
+using System.Linq;
 
 namespace WinInsolNUnitTests
 {
@@ -67,6 +68,15 @@ namespace WinInsolNUnitTests
         public void GetStepsFromCode(int res, string code)
         {
             Assert.AreEqual(res, Program.GetStepsFromCode(code));
+        }
+
+        [Test]
+        public void SetCombinationsBool_3Rooms()
+        {
+            var flat = new Flat("CR_3_1");
+            flat.SetWindowCombinationsBool();
+            //var test = string.Join("",flat.WindowCombinationsBool[0].Select();
+            Assert.IsTrue(flat.WindowCombinationsBool[0][0]);
         }
     }
 }

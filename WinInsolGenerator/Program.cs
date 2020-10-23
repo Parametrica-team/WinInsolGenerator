@@ -15,7 +15,8 @@ namespace WinInsolGenerator
         {
             string path = Assembly.GetExecutingAssembly().Location;
             //path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
-            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_7.txt");
+            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_5.txt");
+            const int sideWindows = 2;
             
             var winInsols = new List<WindowInsol>();
             var hblockInsols = new List<HblockInsol>();
@@ -25,11 +26,12 @@ namespace WinInsolGenerator
             //потом, когда все строки будут отсортированы, то нужно будет убрать
             levelCodes = levelCodes.Select(c => SortCodeClockwise(c)).ToArray();
 
+            var numberOfSteps = GetStepsFromCode(levelCodes[0]);
             var winInsol = new WindowInsol()
             {
                 llu = "llu",
-                HblockId = "S_M_" + GetStepsFromCode(levelCodes[0]),
-                WindowId = new HashSet<string>()
+                HblockId = "S_M_" + numberOfSteps,
+                WindowId = new byte[numberOfSteps * 2 + (sideWindows * 2)]
             };
 
             var hblockInsol = new HblockInsol(winInsol.HblockId, levelCodes);
@@ -45,7 +47,7 @@ namespace WinInsolGenerator
                 Console.Write("\r" + (int)(counter * 100 / levelCodes.Length) + " %");
 
                 //Create Flats
-                List<Flat> level = GetFlatsFromCode(levelCode, 2);
+                List<Flat> level = GetFlatsFromCode(levelCode, sideWindows);
 
                 //Create combinations inside each flat
                 //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
@@ -58,6 +60,7 @@ namespace WinInsolGenerator
 
                 //Превратить в строку для winInsol                
                 var sortedCombination = new List<string>();
+                /*
                 foreach (var comb in combinator.Combinations)
                 {
                     //В больших квартирах записаны пары "1,5" их нужно учитывать
@@ -66,12 +69,13 @@ namespace WinInsolGenerator
                         .ToList();
 
                     winInsol.WindowId.Add(string.Join(',', nums));
-                }                
+                }
+                */
 
                 //add WinInsol to list
                 //winInsols.Add(winInsol);
 
-                
+                /*
                 //собрать списки подходящих уровней для каждой комбинации инсоляции для HBlock                
                 foreach (var winIns in winInsol.WindowId)
                 {                    
@@ -80,7 +84,7 @@ namespace WinInsolGenerator
                     else
                         hblockInsol.InsolData.Add(winIns, new HashSet<int>() { counter });
                 }
-
+                */
                 counter++;
             }
 
