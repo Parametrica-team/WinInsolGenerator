@@ -30,7 +30,7 @@ namespace WinInsolGenerator
             var numberOfSteps = GetStepsFromCode(levelCodes[0]);
             var winInsol = new WindowInsol()
             {
-                llu = "llu",
+                Llu = "llu",
                 HblockId = "S_M_" + numberOfSteps,
                 WindowId = new List<BitArray>()
             };
@@ -45,7 +45,7 @@ namespace WinInsolGenerator
             foreach (var levelCode  in levelCodes)
             {
                 //процент выполнения
-                Console.Write("\r" + (int)(counter * 100 / levelCodes.Length) + " %");
+                Console.Write("\r" + (int)((counter + 1) * 100 / levelCodes.Length) + " %");
 
                 //Create Flats
                 List<Flat> level = GetFlatsFromCode(levelCode, sideWindows);

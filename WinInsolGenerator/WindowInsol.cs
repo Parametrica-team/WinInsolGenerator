@@ -11,16 +11,11 @@ namespace WinInsolGenerator
     public class WindowInsol
     {
         public string HblockId { get; set; }
-        public string llu { get; set; }
+        public string Llu { get; set; }
         public List<BitArray> WindowId { get; set; }
 
         public WindowInsol()
         {
-        }
-
-        public WindowInsol(int windowQty)
-        {
-            WindowId = new List<BitArray>();
         }
     }
 }
