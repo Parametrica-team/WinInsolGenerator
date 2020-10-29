@@ -23,7 +23,7 @@ namespace WinInsolGenerator
             var levelCodes = System.IO.File.ReadAllLines(path);
 
             //потом, когда все строки будут отсортированы, то нужно будет убрать
-            levelCodes = levelCodes.Select(c => SortCodeClockwise(c)).ToArray();
+            //levelCodes = levelCodes.Select(c => SortCodeClockwise(c)).ToArray();
 
             var winInsol = new WindowInsol()
             {
