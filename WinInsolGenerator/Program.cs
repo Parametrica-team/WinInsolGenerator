@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Collections;
 using System.Runtime.Serialization.Formatters.Binary;
+using Microsoft.EntityFrameworkCore;
 
 namespace WinInsolGenerator
 {
@@ -14,18 +15,36 @@ namespace WinInsolGenerator
     {        
         static void Main(string[] args)
         {
+            var bool1 = new bool[3] { true, false, true };
+            var bool2 = new bool[3] { true, true, true };
+
+            var bit1 = new BitArray(bool1);
+            var bit2 = new BitArray(bool2);
+
+            Console.WriteLine($"bit1 = { bit1.ToBitString()}");
+            Console.WriteLine($"bit2 = { bit2.ToBitString()}");
+            var bitCompare = new BitArray(bit1).And(bit2);
+            Console.WriteLine($"bit1 AND bit2 = {bitCompare.ToBitString()}");
+            bool check = bit1.Xor(bit2).OfType<bool>().All(x => !x);
+
+            bool res = InsolationOverlap(bit1, bit2);
+
+            Console.WriteLine($"result = {check}");
+
+
+
+            //ReadTest();
+            //return;
+
             string path = Assembly.GetExecutingAssembly().Location;
             //path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\one_string.txt");
-            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_7.txt");
+            path = System.IO.Path.GetFullPath(path + @"..\..\..\..\..\example\combinations_llu2_15.txt");
             const int sideWindows = 2;
-            
+
             var winInsols = new List<WindowInsol>();
             var hblockInsols = new List<HblockInsol>();
             //read file
             var levelCodes = System.IO.File.ReadAllLines(path);
-
-            //потом, когда все строки будут отсортированы, то нужно будет убрать
-            //levelCodes = levelCodes.Select(c => SortCodeClockwise(c)).ToArray();
 
             var numberOfSteps = GetStepsFromCode(levelCodes[0]);
             var winInsol = new WindowInsol()
@@ -42,49 +61,57 @@ namespace WinInsolGenerator
             stopwatch.Start();
 
             int counter = 0;
-            foreach (var levelCode  in levelCodes)
+            using (ApplicationContext db = new ApplicationContext())
             {
-                //процент выполнения
-                Console.Write("\r" + (int)((counter + 1) * 100 / levelCodes.Length) + " %");
-
-                //Create Flats
-                List<Flat> level = GetFlatsFromCode(levelCode, sideWindows);
-
-                //Create combinations inside each flat
-                //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
-                level.ForEach(f => f.SetWindowCombinationsBits());
-
-                //создать все возможные комбинации окон
-                var combinator = new Combinator<BitArray>(level
-                    .Where(f => f.FType != "llu")
-                    .Select(f => f.WindowCombinationsBits).ToList());
-
-                //Превратить в строку для winInsol 
-                var totalWins = (numberOfSteps + sideWindows) * 2;
-                foreach (List<BitArray> comb in combinator.Combinations)
+                foreach (var levelCode in levelCodes)
                 {
-                    var boolArray = new bool[totalWins];
-                    int currentIndex = 0;
-                    foreach (var bitAr in comb)
+                    //процент выполнения
+                    Console.Write("\r" + (int)((counter + 1) * 100 / levelCodes.Length) + " %");
+
+                    //Create Flats
+                    List<Flat> level = GetFlatsFromCode(levelCode, sideWindows);
+
+                    //Create combinations inside each flat
+                    //нужно, чтобы учитывались 4+ комнатные квартиры внутри которых уже несколько комбинаций окон
+                    level.ForEach(f => f.SetWindowCombinationsBits());
+
+                    //создать все возможные комбинации окон
+                    var combinator = new Combinator<BitArray>(level
+                        .Where(f => f.FType != "llu")
+                        .Select(f => f.WindowCombinationsBits).ToList());
+
+                    //Превратить в строку для winInsol 
+                    var totalWins = (numberOfSteps + sideWindows) * 2;
+                    foreach (List<BitArray> comb in combinator.Combinations)
                     {
-                        bitAr.CopyTo(boolArray, currentIndex);
-                        currentIndex += bitAr.Length;
+                        var boolArray = new bool[totalWins];
+                        int currentIndex = 0;
+                        foreach (var bitAr in comb)
+                        {
+                            bitAr.CopyTo(boolArray, currentIndex);
+                            currentIndex += bitAr.Length;
+                        }
+
+                        //winInsol.WindowId.Add(new BitArray(boolArray));
+
+
+
+                        var insolData = new InsolationDataTest
+                        {
+                            HblockType = "M",
+                            Steps = numberOfSteps,
+                            LevelCode = levelCode,
+                            WinInsol = new BitArray(boolArray)
+                        };
+
+                        db.InsolationDatas.Add(insolData);
+
+
                     }
 
-                    winInsol.WindowId.Add(new BitArray(boolArray));
+                    counter++;
+                    db.SaveChanges();
                 }
-                
-                
-                //собрать списки подходящих уровней для каждой комбинации инсоляции для HBlock                
-                foreach (var winIns in winInsol.WindowId)
-                {                    
-                    if (hblockInsol.InsolData.ContainsKey(winIns))
-                        hblockInsol.InsolData[winIns].Add(counter); //counter совпадает с индексом в hblockInsol.LevelCodes
-                    else
-                        hblockInsol.InsolData.Add(winIns, new HashSet<int>() { counter });
-                }
-                
-                counter++;
             }
 
             stopwatch.Stop();
@@ -98,53 +125,93 @@ namespace WinInsolGenerator
                                     t.Milliseconds);
             Console.WriteLine($"Total time: {t.Hours:D2}h:{t.Minutes:D2}m:{t.Seconds:D2}s:{t.Milliseconds:D3}ms");
 
-            //сохранение json            
-            string folder = Path.GetDirectoryName(path);
-            string fileName = Path.GetFileNameWithoutExtension(path);
+            ////сохранение json            
+            //string folder = Path.GetDirectoryName(path);
+            //string fileName = Path.GetFileNameWithoutExtension(path);
+
+            ////сохранение бинарное
             //stopwatch.Restart();
-            //var winInsolPath = Path.Combine(folder, fileName + "_WinInsol.json");
-            //var winInsolJson = JsonConvert.SerializeObject(winInsol, Formatting.Indented);
-            //File.WriteAllText(winInsolPath, winInsolJson);
-            //Console.WriteLine($"WinInsol saved to {winInsolPath}");
-            //Console.WriteLine($"WinInsol json saved in {stopwatch.ElapsedMilliseconds}ms");            
+            //var binaryWinInsolPath = Path.Combine(folder, fileName + "_WinInsol.wins");
+            //Stream SaveFileStream = File.Create(binaryWinInsolPath);
+            //BinaryFormatter serializer = new BinaryFormatter();
+            //serializer.Serialize(SaveFileStream, winInsol);
+            //SaveFileStream.Close();            
+            //Console.WriteLine($"WinInsol saved in {stopwatch.ElapsedMilliseconds}ms");
 
-            
-            //string hblockInsolJson = JsonConvert.SerializeObject(hblockInsol, Formatting.Indented);
-            //var hblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.json");
-            //File.WriteAllText(hblockInsolPath, hblockInsolJson);
-            //Console.WriteLine($"HlockInsol saved to {hblockInsolPath}");
+            ////сохранение бинарное hblockInsol
+            //stopwatch.Restart();
+            //var binaryHblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.wins");
+            //SaveFileStream = File.Create(binaryHblockInsolPath);
+            //serializer = new BinaryFormatter();
+            //serializer.Serialize(SaveFileStream, hblockInsol);
+            //SaveFileStream.Close();
+            //Console.WriteLine($"HblockInsol saved in {stopwatch.ElapsedMilliseconds}ms");
 
-            //сохранение бинарное
-            stopwatch.Restart();
-            var binaryWinInsolPath = Path.Combine(folder, fileName + "_WinInsol.wins");
-            Stream SaveFileStream = File.Create(binaryWinInsolPath);
-            BinaryFormatter serializer = new BinaryFormatter();
-            serializer.Serialize(SaveFileStream, winInsol);
-            SaveFileStream.Close();            
-            Console.WriteLine($"WinInsol saved in {stopwatch.ElapsedMilliseconds}ms");
+            //winInsol = null;
+            //stopwatch.Restart();
+            //var winInsolRead = new WindowInsol();
+            //if (File.Exists(binaryWinInsolPath))
+            //{
+            //    Console.WriteLine("Reading saved file");
+            //    Stream openFileStream = File.OpenRead(binaryWinInsolPath);
+            //    BinaryFormatter deserializer = new BinaryFormatter();
+            //    winInsolRead = (WindowInsol)deserializer.Deserialize(openFileStream);
+            //    //TestLoan.TimeLastLoaded = DateTime.Now;
+            //    openFileStream.Close();
+            //}
+            //Console.WriteLine($"WinInsol opened in {stopwatch.ElapsedMilliseconds}ms");
+        }
 
-            //сохранение бинарное hblockInsol
-            stopwatch.Restart();
-            var binaryHblockInsolPath = Path.Combine(folder, fileName + "_HblockInsol.wins");
-            SaveFileStream = File.Create(binaryHblockInsolPath);
-            serializer = new BinaryFormatter();
-            serializer.Serialize(SaveFileStream, hblockInsol);
-            SaveFileStream.Close();
-            Console.WriteLine($"HblockInsol saved in {stopwatch.ElapsedMilliseconds}ms");
-
-            winInsol = null;
-            stopwatch.Restart();
-            var winInsolRead = new WindowInsol();
-            if (File.Exists(binaryWinInsolPath))
+        private static bool InsolationOverlap(BitArray levelInsol, BitArray hblockInsol)
+        {
+            bool res = true;
+            for (int i = 0; i < levelInsol.Length; i++)
             {
-                Console.WriteLine("Reading saved file");
-                Stream openFileStream = File.OpenRead(binaryWinInsolPath);
-                BinaryFormatter deserializer = new BinaryFormatter();
-                winInsolRead = (WindowInsol)deserializer.Deserialize(openFileStream);
-                //TestLoan.TimeLastLoaded = DateTime.Now;
-                openFileStream.Close();
+                if (levelInsol[i])
+                {
+                    if (!hblockInsol[i])
+                    {
+                        res = false;
+                        break;
+                    }
+                }
             }
-            Console.WriteLine($"WinInsol opened in {stopwatch.ElapsedMilliseconds}ms");
+
+            return res;
+        }
+
+        private static void ReadTest()
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+            using (var db = new ApplicationContext())
+            {
+                
+                //var res = db.InsolationData
+                //    .Where(i => EF.Functions.Like(i.LevelCode, "CL_2%"))
+                //    .ToList();
+
+                var hbIns = new BitArray(new bool[32]
+                {
+                    true, true, true, true, false, false, true, true, true, true, false, false, true, true, false, false, true, true,
+                    true, true, true, true, false, false, true, true, true, true, false, false, true, true
+                });
+
+                //hbIns.SetAll(true);
+
+                var allData = db.InsolationDatas.Where(i => i.Steps == 15)
+                    .ToList();
+
+                allData = allData.Where(i => InsolationOverlap(i.WinInsol, hbIns))
+                    .ToList();
+
+                Console.WriteLine("total = " + allData.Count);
+
+
+                Console.WriteLine(timer.Elapsed.TotalSeconds);
+                //Console.WriteLine(res.FirstOrDefault().LevelCode);
+                
+            }
         }
 
         public static int GetStepsFromCode(string levelCode)
